@@ -15,7 +15,7 @@
 	let board: HTMLElement;
 	let capturedPieces: ChessStore['capturedPieces'];
 	let fen: ChessStore['fen'];
-
+	let color: ChessStore['color'];
 	let moveSound: HTMLAudioElement;
 	let captureSound: HTMLAudioElement;
 
@@ -79,14 +79,14 @@
 	});
 	chessStoreSub((data) => {
 		capturedPieces = data.capturedPieces;
+		color = data.color;
 		if (cg) {
-			// if (!fen) {
 			fen = data['fen'] as string;
 			chess.load(fen);
 			cg.set({
-				fen
+				fen,
+				orientation: color as Config['orientation']
 			});
-			// }
 		}
 	});
 </script>

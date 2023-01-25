@@ -1,7 +1,7 @@
-import { authStoreSet } from "../store";
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { updateAuthStore } from "src/store/auth";
 
 export const firebaseConfig = {
   apiKey: "AIzaSyCDBubFrwW2OGFXDf3ndr1Ih3m1gDn2gPI",
@@ -18,7 +18,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 auth.onAuthStateChanged((user) => {
-  authStoreSet({
+  updateAuthStore({
     isLoggedIn: user !== null,
     user
   })

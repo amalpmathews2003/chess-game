@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { addDoc, collection, doc, DocumentSnapshot, getDoc, getFirestore, onSnapshot, setDoc, updateDoc, type DocumentData } from "firebase/firestore";
 import { updateAuthStore, type AuthUser } from "./auth";
-import { chessStoreSub, updateChessStore } from "./chess";
+import { chessStoreSub, updateChessStore, type ChessStore } from "./chess";
 
 
 const firebaseConfig = {
@@ -45,7 +45,14 @@ export async function updateRoomDoc(roomId: string, data: any) {
 export function handleRoom(roomId: string, currentUser: AuthUser) {
   if (!currentUser) return
 
-  let opponent: string, fen: string;
+
+  let chessStoreData: ChessStore = {
+    fen: '',
+    opponent: '',
+    me: currentUser,
+    color: 'white'
+  };
+
   roomSnapshot(roomId, (docSnap) => {
     if (!docSnap.exists()) {
       console.log('invalid roomId')
@@ -53,23 +60,24 @@ export function handleRoom(roomId: string, currentUser: AuthUser) {
     }
     const data = docSnap.data();
 
-
     if (data['user1'] && !data['user2'] && data['user1'] != currentUser.uid) {
       updateRoomDoc(roomId, {
         'user2': currentUser.uid
       })
     }
+    if (data['fen'] && data['fen'] as string != chessStoreData['fen']) {
+      chessStoreData['fen'] = data['fen']
+    }
+    chessStoreData['opponent'] = data['user2']
 
-    if (data['fen'] && data['fen'] as string != fen) {
-      fen = data['fen']
+    if (currentUser.uid == data['user1']) {
+      chessStoreData['color'] = "white";
+    } else if (currentUser.uid == data['user2']) {
+      chessStoreData['color'] = "black";
     }
-    opponent = data['user2']
-    let obj = {
-      opponent,
-      fen,
-      me: data['user1']
-    }
-    updateChessStore(obj)
+
+    chessStoreData['me'] = data['user1']
+    updateChessStore(chessStoreData)
   })
 }
 
