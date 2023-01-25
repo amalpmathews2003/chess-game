@@ -14,7 +14,8 @@
 	async function playFriendly() {
 		if (!user) return;
 		const docRef = await createRoom({
-			user1: user.uid
+			user1: user.uid,
+			fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 		});
 		goto(docRef.id);
 	}

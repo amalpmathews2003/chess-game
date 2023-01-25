@@ -34,7 +34,7 @@ cg-board {
 	background-size: cover;
 	cursor: pointer;
 }
-cg-board square {
+square {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -42,7 +42,7 @@ cg-board square {
 	height: 12.5%;
 	pointer-events: none;
 }
-cg-board square.move-dest {
+square.move-dest {
 	background: radial-gradient(
 		rgba(20, 85, 30, 0.5) 22%,
 		#208530 0,
@@ -51,7 +51,7 @@ cg-board square.move-dest {
 	);
 	pointer-events: auto;
 }
-cg-board square.premove-dest {
+square.premove-dest {
 	background: radial-gradient(
 		rgba(20, 30, 85, 0.5) 22%,
 		#203085 0,
@@ -59,26 +59,26 @@ cg-board square.premove-dest {
 		rgba(0, 0, 0, 0) 0
 	);
 }
-cg-board square.oc.move-dest {
+square.oc.move-dest {
 	background: radial-gradient(transparent 0%, transparent 80%, rgba(20, 85, 0, 0.3) 80%);
 }
-cg-board square.oc.premove-dest {
+square.oc.premove-dest {
 	background: radial-gradient(transparent 0%, transparent 80%, rgba(20, 30, 85, 0.2) 80%);
 }
-cg-board square.move-dest:hover {
+square.move-dest:hover {
 	background: rgba(20, 85, 30, 0.3);
 }
-cg-board square.premove-dest:hover {
+square.premove-dest:hover {
 	background: rgba(20, 30, 85, 0.2);
 }
-cg-board square.last-move {
+square.last-move {
 	will-change: transform;
 	background-color: rgba(155, 199, 0, 0.41);
 }
-cg-board square.selected {
+square.selected {
 	background-color: rgba(20, 85, 30, 0.5);
 }
-cg-board square.check {
+square.check {
 	background: radial-gradient(
 		ellipse at center,
 		rgba(255, 0, 0, 1) 0%,
@@ -87,10 +87,10 @@ cg-board square.check {
 		rgba(158, 0, 0, 0) 100%
 	);
 }
-cg-board square.current-premove {
+square.current-premove {
 	background-color: rgba(20, 30, 85, 0.5);
 }
-.cg-wrap piece {
+piece {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -101,14 +101,14 @@ cg-board square.current-premove {
 	will-change: transform;
 	pointer-events: none;
 }
-cg-board piece.dragging {
+piece.dragging {
 	cursor: move;
 	z-index: 9;
 }
-cg-board piece.anim {
+piece.anim {
 	z-index: 8;
 }
-cg-board piece.fading {
+piece.fading {
 	z-index: 1;
 	opacity: 0.5;
 }

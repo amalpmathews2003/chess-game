@@ -1,8 +1,9 @@
 import { writable } from "svelte/store";
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { addDoc, collection, doc, DocumentSnapshot, getFirestore, onSnapshot, type DocumentData } from "firebase/firestore";
+import { addDoc, collection, doc, DocumentSnapshot, getDoc, getFirestore, onSnapshot, setDoc, updateDoc, type DocumentData } from "firebase/firestore";
 import { updateAuthStore, type AuthUser } from "./auth";
+import { chessStoreSub, updateChessStore } from "./chess";
 
 
 const firebaseConfig = {
@@ -27,7 +28,6 @@ auth.onAuthStateChanged((user) => {
   })
 })
 
-
 const firebaseStore = writable({
   app, auth, db
 })
@@ -38,7 +38,43 @@ export async function createRoom(data: Object) {
   return docRef
 }
 
+export async function updateRoomDoc(roomId: string, data: any) {
+  console.log(data)
+  await updateDoc(doc(db, 'rooms', roomId), data)
+}
+export function handleRoom(roomId: string, currentUser: AuthUser) {
+  if (!currentUser) return
+
+  let opponent: string, fen: string;
+  roomSnapshot(roomId, (docSnap) => {
+    if (!docSnap.exists()) {
+      console.log('invalid roomId')
+      return
+    }
+    const data = docSnap.data();
+
+
+    if (data['user1'] && !data['user2'] && data['user1'] != currentUser.uid) {
+      updateRoomDoc(roomId, {
+        'user2': currentUser.uid
+      })
+    }
+
+    if (data['fen'] && data['fen'] as string != fen) {
+      fen = data['fen']
+    }
+    opponent = data['user2']
+    let obj = {
+      opponent,
+      fen,
+      me: data['user1']
+    }
+    updateChessStore(obj)
+  })
+}
+
 type callbackFn = (snapshot: DocumentSnapshot<DocumentData>) => void
+
 export function roomSnapshot(roomId: string, callback: callbackFn) {
   const snapshot = onSnapshot(doc(db, "rooms", roomId), callback)
   return snapshot

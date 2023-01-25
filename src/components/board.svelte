@@ -6,8 +6,15 @@
 	import type { Square } from 'chess.js';
 
 	import './board.css';
+	import { chessStoreSub, updateChessStore, type ChessStore } from '../store/chess';
+	import Piece from './piece.svelte';
+	import { updateRoomDoc } from '../../src/store/firebase';
+
+	export let roomId: string;
 
 	let board: HTMLElement;
+	let capturedPieces: ChessStore['capturedPieces'];
+	let fen: ChessStore['fen'];
 
 	let moveSound: HTMLAudioElement;
 	let captureSound: HTMLAudioElement;
@@ -25,21 +32,29 @@
 		highlight: {
 			check: true,
 			lastMove: true
-		},
-		draggable: {
-			showGhost: true
 		}
 	};
 	onMount(() => {
 		cg = Chessground(board, config);
 		const events: Config['events'] = {
-			move(orig, dest, capturedPiece) {
+			async move(orig, dest, capturedPiece) {
 				chess.move(`${orig}-${dest}`);
-				
-				if (capturedPiece) captureSound.play();
-				else moveSound.play();
-
-				if (chess.inCheck()) {
+				updateChessStore({ fen: chess.fen() });
+				await updateRoomDoc(roomId, { fen: chess.fen() });
+				if (capturedPiece) {
+					let capturedPiecesNew = capturedPieces;
+					capturedPiecesNew?.push(capturedPiece);
+					updateChessStore({ capturedPieces: capturedPiecesNew });
+					captureSound.play();
+				} else moveSound.play();
+				if (chess.isCheckmate()) {
+					alert('Check Mate');
+				} else if (chess.isDraw()) {
+					alert('Draw');
+				} else if (chess.isStalemate()) {
+					alert('Stalemate');
+				}
+				if (chess.isCheck()) {
 					cg.set({
 						check: true
 					});
@@ -62,19 +77,47 @@
 		};
 		cg.set({ events });
 	});
+	chessStoreSub((data) => {
+		capturedPieces = data.capturedPieces;
+		if (cg) {
+			// if (!fen) {
+			fen = data['fen'] as string;
+			chess.load(fen);
+			cg.set({
+				fen
+			});
+			// }
+		}
+	});
 </script>
 
 <div class="container">
-	<div bind:this={board} />
+	<div class="container">
+		<div bind:this={board} />
+	</div>
+	<div class="container">
+		{#if capturedPieces}
+			<div class="captured">
+				{#each capturedPieces.filter((p) => p.color == 'black') as piece}
+					<Piece {piece} />
+				{/each}
+			</div>
+			<div class="captured">
+				{#each capturedPieces.filter((p) => p.color == 'white') as piece}
+					<Piece {piece} />
+				{/each}
+			</div>
+		{/if}
+	</div>
 </div>
 <div class="hidden">
 	<audio
 		bind:this={moveSound}
-		src="http://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3"
+		src="https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3"
 	/>
 	<audio
 		bind:this={captureSound}
-		src="http://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"
+		src="https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3"
 	/>
 </div>
 
@@ -82,8 +125,16 @@
 	.container {
 		display: flex;
 		justify-content: center;
+		flex-direction: column;
+		margin: 0 10rem;
 	}
 	.hidden {
 		display: none;
+	}
+	.captured {
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
 	}
 </style>
