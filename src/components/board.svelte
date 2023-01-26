@@ -9,6 +9,7 @@
 	import { chessStoreSub, updateChessStore, type ChessStore } from '../store/chess';
 	import Piece from './piece.svelte';
 	import { updateRoomDoc } from '../../src/store/firebase';
+	import type { Orig } from 'chessgroundx/types';
 
 	export let roomId: string;
 
@@ -27,20 +28,33 @@
 		orientation,
 		movable: {
 			free: false
+		},
+		addPieceZIndex: true,
+
+		premovable: {
+			enabled: true
 		}
 	};
 	onMount(() => {
 		cg = Chessground(board, config);
 		const events: Config['events'] = {
 			async move(orig, dest, capturedPiece) {
-				chess.move(`${orig}-${dest}`);
+				const move = `${orig}-${dest}`;
+				chess.move(move);
 				let capturedPiecesNew = capturedPieces;
 				if (capturedPiece) {
 					capturedPiecesNew?.push(capturedPiece);
 					captureSound.play();
 				} else moveSound.play();
 				updateChessStore({ fen: chess.fen(), capturedPieces: capturedPiecesNew });
-				await updateRoomDoc(roomId, { fen: chess.fen(), capturedPieces: capturedPiecesNew });
+				await updateRoomDoc(roomId, {
+					fen: chess.fen(),
+					capturedPieces: capturedPiecesNew,
+					lastMove: move
+				});
+				cg.set({
+					check: chess.isCheck()
+				});
 
 				if (chess.isCheckmate()) {
 					alert('Check Mate');
@@ -49,15 +63,10 @@
 				} else if (chess.isStalemate()) {
 					alert('Stalemate');
 				}
-				if (chess.isCheck()) {
-					cg.set({
-						check: true
-					});
-				}
 			},
 			select(key) {
 				if (color && color[0] != (chess.turn() as string)) {
-					cg.unselect();
+					return;
 				}
 				const dests = new Map();
 				const possibleMoves = chess.moves({ square: key as Square, verbose: true });
@@ -78,9 +87,26 @@
 	chessStoreSub((data) => {
 		capturedPieces = data.capturedPieces;
 		color = color || (data.color as Config['orientation']);
+
 		if (cg) {
 			fen = data['fen'] as string;
 			chess.load(fen);
+			try {
+				if (
+					capturedPieces &&
+					data.capturedPieces &&
+					data.capturedPieces.length > capturedPieces.length
+				) {
+					captureSound.play();
+				} else {
+					moveSound.play();
+				}
+			} catch (error) {}
+			cg.set({
+				fen,
+				orientation: color,
+				check: chess.isCheck()
+			});
 			if (chess.isCheckmate()) {
 				alert('Check Mate');
 			} else if (chess.isDraw()) {
@@ -88,15 +114,6 @@
 			} else if (chess.isStalemate()) {
 				alert('Stalemate');
 			}
-			if (chess.isCheck()) {
-				cg.set({
-					check: true
-				});
-			}
-			cg.set({
-				fen,
-				orientation: color,
-			});
 		}
 	});
 </script>
@@ -137,7 +154,8 @@
 		display: flex;
 		justify-content: center;
 		flex-direction: column;
-		margin: 0 10rem;
+		align-items: center;
+		user-select: none;
 	}
 	.hidden {
 		display: none;
