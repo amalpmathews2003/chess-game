@@ -26,12 +26,7 @@
 	const config: Config = {
 		orientation,
 		movable: {
-			showDests: true,
 			free: false
-		},
-		highlight: {
-			check: true,
-			lastMove: true
 		}
 	};
 	onMount(() => {
@@ -39,14 +34,14 @@
 		const events: Config['events'] = {
 			async move(orig, dest, capturedPiece) {
 				chess.move(`${orig}-${dest}`);
-				updateChessStore({ fen: chess.fen() });
-				await updateRoomDoc(roomId, { fen: chess.fen() });
+				let capturedPiecesNew = capturedPieces;
 				if (capturedPiece) {
-					let capturedPiecesNew = capturedPieces;
 					capturedPiecesNew?.push(capturedPiece);
-					updateChessStore({ capturedPieces: capturedPiecesNew });
 					captureSound.play();
 				} else moveSound.play();
+				updateChessStore({ fen: chess.fen(), capturedPieces: capturedPiecesNew });
+				await updateRoomDoc(roomId, { fen: chess.fen(), capturedPieces: capturedPiecesNew });
+
 				if (chess.isCheckmate()) {
 					alert('Check Mate');
 				} else if (chess.isDraw()) {
@@ -61,6 +56,9 @@
 				}
 			},
 			select(key) {
+				if (color && color[0] != (chess.turn() as string)) {
+					cg.unselect();
+				}
 				const dests = new Map();
 				const possibleMoves = chess.moves({ square: key as Square, verbose: true });
 				dests.set(
@@ -79,13 +77,25 @@
 	});
 	chessStoreSub((data) => {
 		capturedPieces = data.capturedPieces;
-		color = data.color;
+		color = color || (data.color as Config['orientation']);
 		if (cg) {
 			fen = data['fen'] as string;
 			chess.load(fen);
+			if (chess.isCheckmate()) {
+				alert('Check Mate');
+			} else if (chess.isDraw()) {
+				alert('Draw');
+			} else if (chess.isStalemate()) {
+				alert('Stalemate');
+			}
+			if (chess.isCheck()) {
+				cg.set({
+					check: true
+				});
+			}
 			cg.set({
 				fen,
-				orientation: color as Config['orientation']
+				orientation: color,
 			});
 		}
 	});
@@ -110,6 +120,7 @@
 		{/if}
 	</div>
 </div>
+<h3>{color}</h3>
 <div class="hidden">
 	<audio
 		bind:this={moveSound}

@@ -39,7 +39,6 @@ export async function createRoom(data: Object) {
 }
 
 export async function updateRoomDoc(roomId: string, data: any) {
-  console.log(data)
   await updateDoc(doc(db, 'rooms', roomId), data)
 }
 export function handleRoom(roomId: string, currentUser: AuthUser) {
@@ -50,7 +49,9 @@ export function handleRoom(roomId: string, currentUser: AuthUser) {
     fen: '',
     opponent: '',
     me: currentUser,
-    color: 'white'
+    color: 'white',
+    lastMove: '',
+    capturedPieces: []
   };
 
   roomSnapshot(roomId, (docSnap) => {
@@ -77,6 +78,8 @@ export function handleRoom(roomId: string, currentUser: AuthUser) {
     }
 
     chessStoreData['me'] = data['user1']
+    chessStoreData['lastMove'] = data['lastMove']
+    chessStoreData['capturedPieces'] = data['capturedPieces'] || []
     updateChessStore(chessStoreData)
   })
 }

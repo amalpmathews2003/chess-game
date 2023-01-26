@@ -8,6 +8,7 @@ const chessStore = writable<ChessStore>({
   capturedPieces: [],
   fen: '',
   opponent: null,
+  lastMove: ''
 })
 
 export function updateChessStore(data: ChessStore) {
@@ -19,7 +20,8 @@ export interface ChessStore {
   capturedPieces?: Piece[];
   fen?: Config['fen'];
   me?: AuthUser,
-  opponent?: string | null
+  opponent?: string | null,
+  lastMove?: string
 }
 
 export const chessStoreSub = chessStore.subscribe;

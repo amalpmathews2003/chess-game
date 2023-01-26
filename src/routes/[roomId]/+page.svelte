@@ -4,6 +4,7 @@
 	import type { PageData } from './$types';
 	import { handleRoom } from '../../../src/store/firebase';
 	import { chessStoreSub } from '../../../src/store/chess';
+	import Offline from '../../components/offline.svelte';
 
 	export let data: PageData;
 
@@ -34,3 +35,4 @@
 <p>{me}</p>
 <p>{opponent}</p>
 <p>{fen}</p>
+<Offline />
