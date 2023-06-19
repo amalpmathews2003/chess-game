@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { authStoreSub, type AuthUser } from '../../store';
-	import Board from '../../components/board.svelte';
 	import type { PageData } from './$types';
 	import { handleRoom } from '../../../src/store/firebase';
 	import { chessStoreSub } from '../../../src/store/chess';
 	import Offline from '../../components/offline.svelte';
+	import BoardPvp from '../../components/board_pvp.svelte';
 
 	export let data: PageData;
 
@@ -30,7 +30,7 @@
 	});
 </script>
 
-<Board roomId={data.room.id} />
+<BoardPvp roomId={data.room.id} />
 <p>{data.room.id}</p>
 <p>{me}</p>
 <p>{opponent}</p>

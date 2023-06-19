@@ -8,7 +8,7 @@
 	import './board.css';
 	import { chessStoreSub, updateChessStore, type ChessStore } from '../store/chess';
 	import Piece from './piece.svelte';
-	import { updateRoomDoc } from '../../src/store/firebase';
+	import { updateRoomDoc } from '../store/firebase';
 
 	export let roomId: string;
 
@@ -82,36 +82,36 @@
 		};
 		cg.set({ events });
 	});
+
 	chessStoreSub((data) => {
+		if (!cg) return;
 		capturedPieces = data.capturedPieces;
 		color = color || (data.color as Config['orientation']);
-
-		if (cg) {
-			fen = data['fen'] as string;
-			chess.load(fen);
-			try {
-				if (
-					capturedPieces &&
-					data.capturedPieces &&
-					data.capturedPieces.length > capturedPieces.length
-				) {
-					captureSound.play();
-				} else {
-					moveSound.play();
-				}
-			} catch (error) {}
-			cg.set({
-				fen,
-				orientation: color,
-				check: chess.isCheck()
-			});
-			if (chess.isCheckmate()) {
-				alert('Check Mate');
-			} else if (chess.isDraw()) {
-				alert('Draw');
-			} else if (chess.isStalemate()) {
-				alert('Stalemate');
+		
+		fen = data['fen'] as string;
+		chess.load(fen);
+		try {
+			if (
+				capturedPieces &&
+				data.capturedPieces &&
+				data.capturedPieces.length > capturedPieces.length
+			) {
+				captureSound.play();
+			} else {
+				moveSound.play();
 			}
+		} catch (error) {}
+		cg.set({
+			fen,
+			orientation: color,
+			check: chess.isCheck()
+		});
+		if (chess.isCheckmate()) {
+			alert('Check Mate');
+		} else if (chess.isDraw()) {
+			alert('Draw');
+		} else if (chess.isStalemate()) {
+			alert('Stalemate');
 		}
 	});
 </script>
