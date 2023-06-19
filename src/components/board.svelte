@@ -9,7 +9,6 @@
 	import { chessStoreSub, updateChessStore, type ChessStore } from '../store/chess';
 	import Piece from './piece.svelte';
 	import { updateRoomDoc } from '../../src/store/firebase';
-	import type { Orig } from 'chessgroundx/types';
 
 	export let roomId: string;
 
@@ -30,7 +29,6 @@
 			free: false
 		},
 		addPieceZIndex: true,
-
 		premovable: {
 			enabled: true
 		}
@@ -41,9 +39,9 @@
 			async move(orig, dest, capturedPiece) {
 				const move = `${orig}-${dest}`;
 				chess.move(move);
-				let capturedPiecesNew = capturedPieces;
+				let capturedPiecesNew = capturedPieces || [];
 				if (capturedPiece) {
-					capturedPiecesNew?.push(capturedPiece);
+					capturedPiecesNew.push(capturedPiece);
 					captureSound.play();
 				} else moveSound.play();
 				updateChessStore({ fen: chess.fen(), capturedPieces: capturedPiecesNew });
