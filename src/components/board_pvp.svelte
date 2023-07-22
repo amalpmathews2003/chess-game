@@ -87,7 +87,7 @@
 		if (!cg) return;
 		capturedPieces = data.capturedPieces;
 		color = color || (data.color as Config['orientation']);
-		
+
 		fen = data['fen'] as string;
 		chess.load(fen);
 		try {
@@ -104,7 +104,8 @@
 		cg.set({
 			fen,
 			orientation: color,
-			check: chess.isCheck()
+			check: chess.isCheck(),
+			turnColor: chess.turn() as Config['turnColor']
 		});
 		if (chess.isCheckmate()) {
 			alert('Check Mate');

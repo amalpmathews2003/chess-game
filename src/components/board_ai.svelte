@@ -4,7 +4,7 @@
 	import { Chess } from 'chess.js';
 	import type { Api, Config } from 'chessgroundx';
 	import type { Square } from 'chess.js';
-
+	import { PUBLIC_SERVER } from '$env/static/public';
 	import './board.css';
 	import { updateChessStore, type ChessStore } from '../store/chess';
 	import Piece from './piece.svelte';
@@ -14,7 +14,8 @@
 	let color: ChessStore['color'];
 	let moveSound: HTMLAudioElement;
 	let captureSound: HTMLAudioElement;
-
+	let playerWDLStats: [number];
+	let aiWDLStats: [number];
 	const chess = new Chess();
 	let cg: Api;
 
@@ -35,6 +36,7 @@
 			async move(orig, dest, capturedPiece) {
 				const move = `${orig}-${dest}`;
 				chess.move(move);
+				getWDLStats(chess.fen());
 				let capturedPiecesNew = capturedPieces || [];
 				if (capturedPiece) {
 					capturedPiecesNew.push(capturedPiece);
@@ -42,11 +44,9 @@
 				} else moveSound.play();
 				updateChessStore({ fen: chess.fen(), capturedPieces: capturedPiecesNew });
 
-				//call for ai move
-				triggerAiMove(chess.fen());
-
 				cg.set({
-					check: chess.isCheck()
+					check: chess.isCheck(),
+					turnColor: chess.turn() as Config['turnColor']
 				});
 
 				if (chess.isCheckmate()) {
@@ -56,6 +56,8 @@
 				} else if (chess.isStalemate()) {
 					alert('Stalemate');
 				}
+
+				triggerAiMove(chess.fen());
 			},
 			select(key) {
 				if (color && color[0] != (chess.turn() as string)) {
@@ -78,8 +80,8 @@
 		cg.set({ events });
 	});
 
-	async function triggerAiMove(fen: ChessStore['fen']) {
-		const res = await fetch('http://127.0.0.1:8000/next', {
+	async function getWDLStats(fen: ChessStore['fen']) {
+		const res = await fetch(PUBLIC_SERVER + '/wdl', {
 			method: 'POST',
 			body: JSON.stringify({ fen }),
 			headers: {
@@ -87,10 +89,27 @@
 				'Content-Type': 'application/json'
 			}
 		});
-		const { next_move } = await res.json();
+		const { wdl_stats } = await res.json();
+		playerWDLStats = wdl_stats;
+	}
+	async function triggerAiMove(fen: ChessStore['fen']) {
+		const res = await fetch(PUBLIC_SERVER + '/next', {
+			method: 'POST',
+			body: JSON.stringify({ fen }),
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/json'
+			}
+		});
+		const { next_move, wdl_stats } = await res.json();
+		aiWDLStats = wdl_stats;
 		const move = `${next_move.slice(0, 2)}-${next_move.slice(2)}`;
 		chess.move(move);
-		cg.set({ fen: chess.fen(), check: chess.isCheck() });
+		cg.set({
+			fen: chess.fen(),
+			check: chess.isCheck(),
+			turnColor: chess.turn() as Config['turnColor']
+		});
 
 		if (chess.isCheckmate()) {
 			alert('Check Mate');
@@ -99,6 +118,18 @@
 		} else if (chess.isStalemate()) {
 			alert('Stalemate');
 		}
+	}
+
+	function get_captured_pieces(game: Chess) {
+		const capturedPieces = [];
+		for (const move of game.history({ verbose: true })) {
+			if (move.hasOwnProperty('captured') && move.captured) {
+				//@ts-ignore
+				capturedPieces.push({ color: move.color, role: move.captured });
+			}
+		}
+
+		return capturedPieces;
 	}
 </script>
 
@@ -118,6 +149,14 @@
 					<Piece {piece} />
 				{/each}
 			</div>
+		{/if}
+	</div>
+	<div>
+		{#if playerWDLStats}
+			<pre>{playerWDLStats}</pre>
+		{/if}
+		{#if aiWDLStats}
+			<pre>{aiWDLStats}</pre>
 		{/if}
 	</div>
 </div>

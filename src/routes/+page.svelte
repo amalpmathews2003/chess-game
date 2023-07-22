@@ -22,6 +22,7 @@
 </script>
 
 <h1>Hello</h1>
+<button><a href="/ai">Play with ai </a> </button>
 
 {#if isLoggedIn && user != null}
 	<p>{user.email}</p>
